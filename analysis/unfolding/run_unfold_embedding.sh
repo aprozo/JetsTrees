@@ -30,7 +30,7 @@ if [[ $# -ge 2 ]]; then
     INPUT="${BASE}/trees/$2"
   fi
 else
-  INPUT="${BASE}/trees/embedding_merged_MCReco1p5.root"
+  INPUT="${BASE}/trees/embedding_merged_HSCalib.root"
 fi
 
 # 3rd arg: output directory (default: analysis/unfolding/out_embedding under BASE)

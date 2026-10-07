@@ -28,7 +28,7 @@ if [[ $# -ge 1 ]]; then
     INPUT_HT="${BASE}/trees/$1"
   fi
 else
-  INPUT_HT="${BASE}/trees/data_merged.root"
+  INPUT_HT="${BASE}/trees/data_merged_OrigCalib.root"
 fi
 
 # 2nd arg: MB data input
@@ -43,7 +43,7 @@ else
 fi
 
 # 3rd arg: RESPONSE ROOT FILE
-RESP_FILE="${3:-${SCRIPT_DIR}/out_embedding_BAYES_wEff_Inc_MCRC1p5/responses_embedding.root}"
+RESP_FILE="${3:-${SCRIPT_DIR}/out_embedding_BAYES_OrigCalib/responses_embedding.root}"
 
 # 4th arg: EFFICIENCIES ROOT FILE
 EFF_FILE="${4:-${BASE}/analysis/efficiencies/efficiencies.root}"

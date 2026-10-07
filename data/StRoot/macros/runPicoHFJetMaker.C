@@ -210,14 +210,16 @@ void runPicoHFJetMaker(TString inputFile, TString outputFile = "output",
     cout << "Running in " << "embedding"<< " mode." << endl;
 
   for (unsigned int pt_name = 0; pt_name < pt_bins_name.size(); pt_name++) {
-    if (outputFile.Contains(pt_bins_name[pt_name].Data()) ||
-        headFile.Contains(pt_bins_name[pt_name].Data()) ||
-        inputFile.Contains(pt_bins_name[pt_name].Data())) {
+    TString binTag = "pt" + pt_bins_name[pt_name] + "_";
+    if (outputFile.BeginsWith(binTag) ||
+        headFile.Contains(binTag) ||
+        inputFile.Contains(binTag)) {
       pThatmin = pt_bins[pt_name];
       pThatmax = pt_bins[pt_name + 1];
       xsecWeight = weights[pt_name];
       cout << "pThat range found: " << pThatmin << " - " << pThatmax
            << " with xsecWeight = " << xsecWeight << endl;
+      break;     
     }
   }
   if ( xsecWeight == -1) {

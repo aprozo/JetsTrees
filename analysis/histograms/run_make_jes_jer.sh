@@ -1,29 +1,26 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Stop on errors
-set -e
-
-# Directory where *this* script lives
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Default file names (can be overridden via arguments)
 IN_BASENAME="${1:-embedding_merged_MCReco1p5.root}"
-OUT_BASENAME="${2:-hists.root}"
+OUT_BASENAME="${2:-jes_jer_hists.root}"
+PLOT_DIR="${3:-${SCRIPT_DIR}/jes_jer_plots}"
 
-# Paths relative to the script location
 INPUT="${SCRIPT_DIR}/../../trees/${IN_BASENAME}"
 OUTPUT="${SCRIPT_DIR}/${OUT_BASENAME}"
-MACRO="${SCRIPT_DIR}/make_hists.C"
+MACRO="${SCRIPT_DIR}/make_jes_jer.C"
 
 echo "----------------------------------------"
-echo "Running histogram production"
+echo "Running MC/reco and JES/JER diagnostics"
 echo "Script dir : $SCRIPT_DIR"
 echo "Input      : $INPUT"
 echo "Output     : $OUTPUT"
+echo "Plot dir   : $PLOT_DIR"
 echo "Macro      : $MACRO"
 echo "----------------------------------------"
 
-root -l -b -q "$MACRO(\"$INPUT\",\"$OUTPUT\")"
+root -l -b -q "${MACRO}(\"${INPUT}\",\"${OUTPUT}\",\"${PLOT_DIR}\")"
 
 echo "----------------------------------------"
 echo "Done."

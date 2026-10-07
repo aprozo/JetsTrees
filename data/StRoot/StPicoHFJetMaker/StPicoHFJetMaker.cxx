@@ -385,6 +385,7 @@ for (int iTow = 0; iTow < 4800; iTow++) { // get btow info
     continue;
 
   double towE = GetTowerCalibEnergy(iTow + 1);
+//  double towE = towHit->energy();
 
   if (doTowErrPlus == true)  towE = towE + 0.038 * towE;
   if (doTowErrMinus == true) towE = towE - 0.038 * towE;

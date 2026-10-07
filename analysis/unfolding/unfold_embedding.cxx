@@ -35,6 +35,9 @@ static const int    kNPtLeadCuts  = sizeof(kPtLeadCuts)/sizeof(kPtLeadCuts[0]);
 static const double kMinSignif = std::sqrt(10.0);  // content/error > sqrt(10)
 static const bool   kSavePtHatDebug = true;
 
+static const int kFirstPtHatBinToUse = 0;  // if == 2; ignore pThat bins 0 and 1  
+static const int kFirstPtHatBinForResponse = 2;
+
 // measured & truth binning
 static const int nbins_meas = 24;
 static const double bin_meas_edges[nbins_meas+1] = {
@@ -65,8 +68,6 @@ static TString NiceCentLabel(const std::string& centToken)
 static const vector<string> kRadii =
   {"R0.2", "R0.3", "R0.4"};
 
-static const int kFirstPtHatBinToUse = 0;  // ignore pThat bins 0 and 1  
-
 // ---- pThat bins (upper edges) and xsec weights (same order) ----
 static const int kNPthatBins = 11;
 
@@ -78,6 +79,10 @@ static const double kPtHatMax[kNPthatBins] =
 static const double kXsecWeights[kNPthatBins] =
   {1.616e+0,  1.355e-01, 2.288e-02, 5.524e-03, 2.203e-03,
    3.437e-04, 4.681e-05, 8.532e-06, 2.178e-06, 1.198e-07, 6.939e-09};
+
+static const double kNgenEvents[kNPthatBins] =
+  {1020062, 1529646, 1275275, 1019532, 1019730,
+   1020088, 1019739, 765165, 509510, 305922, 101971};   
 
 // reco dummy sentinel (keep real negative jets, reject dummy ~ -999)
 static const double RECO_PTCORR_DUMMY_CUT = -500.0;
@@ -457,7 +462,7 @@ void unfold_embedding(const char* inputFile,
 
 
         for (int ip = 0; ip < kNPthatBins; ++ip) {
-        const double xw = kXsecWeights[ip];
+        const double xw = kXsecWeights[ip] / kNgenEvents[ip];
 
         bool pthatHasAnyValidTruth = false;
         for (int jb = 1; jb <= nbins_truth; ++jb) {
@@ -512,26 +517,35 @@ void unfold_embedding(const char* inputFile,
         }
 
         // ---- response full/train (keep only accepted truth columns) ----
-        for (int ix = 1; ix <= nbins_meas; ++ix) {
-          for (int jy = 1; jy <= nbins_truth; ++jy) {
-            if (!validTruthBin[ip][jy]) continue;
+        // For this test, pThat bins 0 and 1 are kept in truth/measured,
+        // but are NOT used to construct the response matrix.
+        if (ip >= kFirstPtHatBinForResponse) {
 
-            {
-              const double oldC = hRespFull->GetBinContent(ix, jy);
-              const double oldE = hRespFull->GetBinError(ix, jy);
-              const double addC = xw * hRespFull_ptHat[ip]->GetBinContent(ix, jy);
-              const double addE = xw * hRespFull_ptHat[ip]->GetBinError(ix, jy);
-              hRespFull->SetBinContent(ix, jy, oldC + addC);
-              hRespFull->SetBinError(ix, jy, std::sqrt(oldE*oldE + addE*addE));
-            }
+          for (int ix = 1; ix <= nbins_meas; ++ix) {
+            for (int jy = 1; jy <= nbins_truth; ++jy) {
+              if (!validTruthBin[ip][jy]) continue;
 
-            {
-              const double oldC = hRespTrain->GetBinContent(ix, jy);
-              const double oldE = hRespTrain->GetBinError(ix, jy);
-              const double addC = xw * hRespTrain_ptHat[ip]->GetBinContent(ix, jy);
-              const double addE = xw * hRespTrain_ptHat[ip]->GetBinError(ix, jy);
-              hRespTrain->SetBinContent(ix, jy, oldC + addC);
-              hRespTrain->SetBinError(ix, jy, std::sqrt(oldE*oldE + addE*addE));
+              {
+                const double oldC = hRespFull->GetBinContent(ix, jy);
+                const double oldE = hRespFull->GetBinError(ix, jy);
+                const double addC = xw * hRespFull_ptHat[ip]->GetBinContent(ix, jy);
+                const double addE = xw * hRespFull_ptHat[ip]->GetBinError(ix, jy);
+
+                hRespFull->SetBinContent(ix, jy, oldC + addC);
+                hRespFull->SetBinError(ix, jy,
+                                      std::sqrt(oldE*oldE + addE*addE));
+              }
+
+              {
+                const double oldC = hRespTrain->GetBinContent(ix, jy);
+                const double oldE = hRespTrain->GetBinError(ix, jy);
+                const double addC = xw * hRespTrain_ptHat[ip]->GetBinContent(ix, jy);
+                const double addE = xw * hRespTrain_ptHat[ip]->GetBinError(ix, jy);
+
+                hRespTrain->SetBinContent(ix, jy, oldC + addC);
+                hRespTrain->SetBinError(ix, jy,
+                                      std::sqrt(oldE*oldE + addE*addE));
+              }
             }
           }
         }

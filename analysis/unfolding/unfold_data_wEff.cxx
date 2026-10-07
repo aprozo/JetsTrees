@@ -107,9 +107,19 @@ static TH1* GetHistAnyDir(TFile* f, const std::string& name)
   return nullptr;
 }
 
+struct EqMbNormInfo {
+  double nEqNoR;
+  double nEqWithR;
+  double nHTAcc;
+
+  EqMbNormInfo()
+      : nEqNoR(0.0), nEqWithR(0.0), nHTAcc(0.0) {}
+};
+
 static double CalcEqMbWithR(TFile* fHT,
                             TFile* fMB,
                             const std::string& centTag,
+                            EqMbNormInfo* normInfo = nullptr,
                             TDirectory* outDir = nullptr)
 {
   TH1* hHTAll = GetHistAnyDir(fHT, "hrunId");
@@ -140,6 +150,7 @@ static double CalcEqMbWithR(TFile* fHT,
 
   double neqNoR = 0.0;
   double neqWithR = 0.0;
+  double nHTAcc = 0.0;
 
   for (int ib = 1; ib <= hEqNoR->GetNbinsX(); ++ib) {
     const double eqNoR = hEqNoR->GetBinContent(ib);
@@ -149,6 +160,8 @@ static double CalcEqMbWithR(TFile* fHT,
 
     const double mbAll = hMBAll->GetBinContent(ib);
     const double mbAcc = hMBAcc->GetBinContent(ib);
+
+    nHTAcc += htAcc;
 
     if (eqNoR <= 0.0) continue;
 
@@ -172,11 +185,11 @@ static double CalcEqMbWithR(TFile* fHT,
     neqWithR += eqWithR;
   }
 
-  cout << "    Normalization " << centTag << ":" << endl;
-  cout << "      N_MB_equiv no R   = " << neqNoR << endl;
-  cout << "      N_MB_equiv with R = " << neqWithR << endl;
-  if (neqNoR > 0.0)
-    cout << "      global withR/noR  = " << neqWithR / neqNoR << endl;
+  if (normInfo) {
+    normInfo->nEqNoR   = neqNoR;
+    normInfo->nEqWithR = neqWithR;
+    normInfo->nHTAcc   = nHTAcc;
+  }
 
   if (outDir) {
     outDir->cd();
@@ -194,6 +207,8 @@ static double CalcEqMbWithR(TFile* fHT,
   return neqWithR;
 }
 
+vector<EqMbNormInfo> normSummary(kCentralities.size());
+vector<bool> normSummaryValid(kCentralities.size(), false);
 
 void unfold_data_wEff(const char* dataFileHT,
                  const char* dataFileMB,
@@ -300,7 +315,21 @@ void unfold_data_wEff(const char* dataFileHT,
       TDirectory* normDir = fOutAll->GetDirectory("normalization");
       if (!normDir) normDir = fOutAll->mkdir("normalization");
 
-      const double nEqMB_withR = CalcEqMbWithR(fData, fDataMB, C, normDir);
+      double nEqMB_withR = -1.0;
+
+      if (!normSummaryValid[iC]) {
+        EqMbNormInfo tmpNorm;
+
+        nEqMB_withR =
+            CalcEqMbWithR(fData, fDataMB, C, &tmpNorm, normDir);
+
+        if (nEqMB_withR > 0.0) {
+          normSummary[iC] = tmpNorm;
+          normSummaryValid[iC] = true;
+        }
+      } else {
+        nEqMB_withR = normSummary[iC].nEqWithR;
+      }
 
       if (nEqMB_withR <= 0.0) {
         cout << "  [error] Bad equivalent MB normalization for " << C
@@ -449,6 +478,49 @@ void unfold_data_wEff(const char* dataFileHT,
       } // ptlead cuts
     } // centralities
   } // radii
+
+  cout << "\n\n";
+cout << "============================================================\n";
+cout << "             EQUIVALENT MINIMUM-BIAS SUMMARY\n";
+cout << "============================================================\n";
+
+for (size_t iC = 0; iC < kCentralities.size(); ++iC) {
+
+  const string& C = kCentralities[iC];
+
+  cout << "\nCentrality: " << C << "\n";
+
+  if (!normSummaryValid[iC]) {
+    cout << "  [no valid normalization]\n";
+    continue;
+  }
+
+  const EqMbNormInfo& info = normSummary[iC];
+
+  cout << "  HT accepted events        = "
+       << info.nHTAcc << "\n";
+
+  cout << "  N_MB_equiv no R           = "
+       << info.nEqNoR << "\n";
+
+  cout << "  N_MB_equiv with R         = "
+       << info.nEqWithR << "\n";
+
+  if (info.nHTAcc > 0.0) {
+    cout << "  <HT -> MB weight>         = "
+         << info.nEqNoR / info.nHTAcc << "\n";
+
+    cout << "  total EqMB / HT accepted  = "
+         << info.nEqWithR / info.nHTAcc << "\n";
+  }
+
+  if (info.nEqNoR > 0.0) {
+    cout << "  acceptance correction     = "
+         << info.nEqWithR / info.nEqNoR << "\n";
+  }
+}
+
+cout << "\n============================================================\n";
 
   fOutAll->Write();
   fOutAll->Close();

@@ -52,6 +52,11 @@ static const double kXsecWeights[kNPthatBins] = {
   3.437e-04, 4.681e-05, 8.532e-06, 2.178e-06, 1.198e-07, 6.939e-09
 };
 
+static const double kNgenEvents[kNPthatBins] = {
+  1020062, 1529646, 1275275, 1019532, 1019730,
+  1020088, 1019739, 765165, 509510, 305922, 101971
+};
+
 static const double kMinSignif = std::sqrt(10.0);
 
 static int FindPtHatBin(double xsecW)
@@ -283,7 +288,7 @@ void make_efficiencies(const char *infile  = "embedding_merged.root",
                 const int ip = FindPtHatBin((double)xsecWeight);
                 if (ip < 0) continue;
 
-                double w = (double)xsecWeight * (double)centralityWeight;
+                double w = (double)xsecWeight / kNgenEvents[ip] * (double)centralityWeight;
                 double wCent = (double)centralityWeight;
 
                 // Reco quality cuts
@@ -352,7 +357,7 @@ void make_efficiencies(const char *infile  = "embedding_merged.root",
                 h_pur_num[it]->Reset();
 
                 for (int ip = 0; ip < kNPthatBins; ++ip) {
-                    const double xw = kXsecWeights[ip];
+                    const double xw = kXsecWeights[ip] / kNgenEvents[ip];
 
                     for (int ix = 1; ix <= nbins_meas; ++ix) {
                         const double c = h_trig_den_pthat[it][ip]->GetBinContent(ix);
