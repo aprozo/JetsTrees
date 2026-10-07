@@ -149,6 +149,8 @@ Int_t StPicoJetMaker::Make() {
 
   static_cast<TH1I *>(mOutList->FindObject("hevents"))->Fill(1);
   static_cast<TH1I *>(mOutList->FindObject("hrunId"))->Fill(mPicoDst->event()->runId());
+  if (mPicoCuts->isGoodRun(mPicoDst->event()) && mPicoCuts->isGoodTrigger(mPicoDst->event()))
+    static_cast<TH1I *>(mOutList->FindObject("hrunId_trig"))->Fill(mPicoDst->event()->runId());
 
 
 
@@ -287,6 +289,7 @@ void StPicoJetMaker::initializeEventStats() {
                          refmultmax));
 
   mOutList->Add(new TH1I("hrunId", "runId", 90913, 15076101, 15167014));
+  mOutList->Add(new TH1I("hrunId_trig", "triggered events runId", 90913, 15076101, 15167014));
 
   // Accepted event histograms
   mOutList->Add(new TH1I("hevents_acc", "number of events", 2, 0, 2));

@@ -122,11 +122,11 @@ static double CalcEqMbWithR(TFile* fHT,
                             EqMbNormInfo* normInfo = nullptr,
                             TDirectory* outDir = nullptr)
 {
-  TH1* hHTAll = GetHistAnyDir(fHT, "hrunId");
-  TH1* hMBAll = GetHistAnyDir(fMB, "hrunId");
+  TH1* hHTAll = GetHistAnyDir(fHT, "hrunId_trig");
+  TH1* hMBAll = GetHistAnyDir(fMB, "hrunId_trig");
 
   TH1* hHTAcc = GetHistAnyDir(fHT, Form("hrunId_acc_%s", centTag.c_str()));
-  TH1* hMBAcc = GetHistAnyDir(fMB, Form("hrunId_acc_%s", centTag.c_str()));
+  TH1* hMBAcc = GetHistAnyDir(fMB, Form("hrunId_acc_weighted_%s", centTag.c_str()));
 
   TH1* hEqNoR = GetHistAnyDir(fHT, Form("hrunId_eqMb_%s", centTag.c_str()));
 
